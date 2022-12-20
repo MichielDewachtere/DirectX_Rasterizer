@@ -25,6 +25,9 @@ public:
 	Mesh& operator=(Mesh&& rhs) = delete;
 
 	void Render(ID3D11DeviceContext* pDeviceContext) const;
+	void SetWorldViewProjectionMatrix(const Matrix& viewMatrix, const Matrix& projectionMatrix) const;
+
+	void SetWorldMatrix(const Matrix& newMatrix) { m_WorldMatrix = newMatrix; }
 
 private:
 	ID3D11Buffer* m_pVertexBuffer{};
@@ -33,6 +36,7 @@ private:
 	uint32_t m_AmountIndices;
 	ID3D11Buffer* m_pIndexBuffer{};
 
+	Matrix m_WorldMatrix;
 	std::vector<Vertex> m_Vertices;
 };
 

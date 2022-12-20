@@ -96,3 +96,9 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext) const
 		pDeviceContext->DrawIndexed(m_AmountIndices, 0, 0);
 	}
 }
+
+void Mesh::SetWorldViewProjectionMatrix(const Matrix& viewMatrix, const Matrix& projectionMatrix) const
+{
+	const Matrix worldViewProjection = m_WorldMatrix * viewMatrix * projectionMatrix;
+	m_pEffect->SetMatrixVariable(worldViewProjection);
+}
