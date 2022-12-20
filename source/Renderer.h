@@ -4,6 +4,7 @@ struct SDL_Window;
 struct SDL_Surface;
 
 class Mesh;
+class Camera;
 
 namespace dae
 {
@@ -18,7 +19,7 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
-		void Update(const Timer* pTimer);
+		void Update(const Timer* pTimer) const;
 		void Render() const;
 
 	private:
@@ -28,6 +29,8 @@ namespace dae
 		int m_Height{};
 
 		bool m_IsInitialized{ false };
+
+		Camera* m_pCamera;
 
 		Mesh* m_pMesh;
 		void MeshInit();

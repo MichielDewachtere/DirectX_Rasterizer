@@ -25,11 +25,15 @@ namespace dae {
 		}
 
 		MeshInit();
+
+		m_pCamera = new Camera();
+		m_pCamera->Initialize(45.f, Vector3{ 0.f,0.f,-10.f }, m_Width / (float)m_Height);
 	}
 
 	Renderer::~Renderer()
 	{
 		delete m_pMesh;
+		delete m_pCamera;
 
 		//Release resources (to prevent resource leaks)
 		if (m_pRenderTargetView)
@@ -67,9 +71,11 @@ namespace dae {
 			m_pDXGIFactory->Release();
 	}
 
-	void Renderer::Update(const Timer* pTimer)
+	void Renderer::Update(const Timer* pTimer) const
 	{
+		m_pCamera->Update(pTimer);
 
+		m_pMesh->SetWorldViewProjectionMatrix(m_pCamera->GetViewMatrix(), m_pCamera->GetProjectionMatrix());
 	}
 
 
@@ -96,14 +102,23 @@ namespace dae {
 		const std::vector<Vertex> vertices
 		{
 			// defined in world space
-			{Vector3(0.f, .5f, .5f), ColorRGB(1.f,0.f,0.f)},
-			{Vector3(.5f, -.5f, .5f), ColorRGB(0.f,0.f,1.f)},
-			{Vector3(-.5f, -.5f, .5f), ColorRGB (0.f,1.f,0.f)},
+			{Vector3(0.f, 3.f, 2.f), ColorRGB(1.f,0.f,0.f)},
+			{Vector3(3.f, -3.f, 2.f), ColorRGB(0.f,0.f,1.f)},
+			{Vector3(-3.f, -3.f, 2.f), ColorRGB (0.f,1.f,0.f)}
 
+			//{Vector3(0.f, .5f, .5f), ColorRGB(1.f,0.f,0.f)},
+			//{Vector3(.5f, -.5f, .5f), ColorRGB(0.f,0.f,1.f)},
+			//{Vector3(-.5f, -.5f, .5f), ColorRGB (0.f,1.f,0.f)}
 		};
 		const std::vector<uint32_t> indices{ 0,1,2 };
 
 		m_pMesh = new Mesh{ m_pDevice, vertices, indices };
+
+		const Vector3 position{ 0,0,0 };
+		const Vector3 rotation{ 0,0,0 };
+		const Vector3 scale{ 1,1,1 };
+		
+		m_pMesh->SetWorldMatrix(Matrix::CreateScale(scale) * Matrix::CreateRotation(rotation) * Matrix::CreateTranslation(position));
 	}
 
 	HRESULT Renderer::InitializeDirectX()
