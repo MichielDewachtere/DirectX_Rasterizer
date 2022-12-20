@@ -16,9 +16,16 @@ public:
 	ID3DX11Effect* GetEffect() const;
 	ID3DX11EffectTechnique* GetTechnique() const;
 
+	void SetMatrixVariable(const Matrix& newValue) const
+	{
+		m_pMatWorldViewProjVariable->SetMatrix(reinterpret_cast<const float*>(&newValue));
+	}
+
 private:
 	ID3DX11Effect* m_pEffect;
 	ID3DX11EffectTechnique* m_pTechnique;
+
+	ID3DX11EffectMatrixVariable* m_pMatWorldViewProjVariable;
 
 	static ID3DX11Effect* LoadEffect(ID3D11Device* pDevice, const std::wstring& assetFile);
 };
