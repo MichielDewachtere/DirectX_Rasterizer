@@ -1,8 +1,12 @@
 #include "pch.h"
 #include "Renderer.h"
 
-#include "Mesh.h"
 #include "Camera.h"
+#include "Utils.h"
+
+//#define USE_TRIANGLE
+//#define USE_QUAD
+#define USE_VEHICLE
 
 namespace dae {
 
@@ -24,10 +28,22 @@ namespace dae {
 			std::cout << "DirectX initialization failed!\n";
 		}
 
-		MeshInit();
+#ifdef USE_TRIANGLE
+		TriangleMeshInit();
 
 		m_pCamera = new Camera();
 		m_pCamera->Initialize(45.f, Vector3{ 0.f,0.f,-10.f }, m_Width / (float)m_Height);
+#elif defined(USE_QUAD)
+		QuadMeshInit();
+
+		m_pCamera = new Camera();
+		m_pCamera->Initialize(45.f, Vector3{ 0.f,0.f,-10.f }, m_Width / (float)m_Height);
+#elif defined(USE_VEHICLE)
+		VehicleMeshInit();
+
+		m_pCamera = new Camera();
+		m_pCamera->Initialize(45.f, Vector3{ 0.f,0.f,-50.f }, m_Width / (float)m_Height);
+#endif
 	}
 
 	Renderer::~Renderer()
@@ -75,9 +91,14 @@ namespace dae {
 	{
 		m_pCamera->Update(pTimer);
 
+		if (m_IsRotating)
+		{
+			constexpr float rotationSpeed{ 30 * TO_RADIANS };
+			m_pMesh->SetWorldMatrix(Matrix::CreateRotationY(rotationSpeed * pTimer->GetElapsed()) * m_pMesh->GetWorldMatrix());
+		}
+
 		m_pMesh->SetWorldViewProjectionMatrix(m_pCamera->GetViewMatrix(), m_pCamera->GetProjectionMatrix());
 	}
-
 
 	void Renderer::Render() const
 	{
@@ -90,13 +111,18 @@ namespace dae {
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		//Render
-		m_pMesh->Render(m_pDeviceContext);
+		m_pMesh->Render(m_pDeviceContext, m_FilteringMethod);
 
 		//Present
 		m_pSwapChain->Present(0, 0);
 	}
 
-	void Renderer::MeshInit()
+	void Renderer::ToggleFilteringMethod()
+	{
+		m_FilteringMethod = Mesh::FilteringMethod{ ((int)m_FilteringMethod + 1) % 3 };
+	}
+
+	void Renderer::TriangleMeshInit()
 	{
 		//Create some data for our mesh
 		const std::vector<Vertex> vertices
@@ -119,6 +145,48 @@ namespace dae {
 		const Vector3 scale{ 1,1,1 };
 		
 		m_pMesh->SetWorldMatrix(Matrix::CreateScale(scale) * Matrix::CreateRotation(rotation) * Matrix::CreateTranslation(position));
+	}
+
+	void Renderer::QuadMeshInit()
+	{
+		const std::vector<Vertex> vertices{
+			{Vector3{-3,3,-2},	colors::White,	Vector2{0,0}},
+			{Vector3{0,3,-2},	colors::White,	Vector2{0.5f, 0}},
+			{Vector3{3,3,-2},	colors::White,	Vector2{1,0}},
+			{Vector3{-3,0,-2},	colors::White,	Vector2{0,0.5f}},
+			{Vector3{0,0,-2},	colors::White,	Vector2{0.5f,0.5f}},
+			{Vector3{3,0,-2},	colors::White,	Vector2{1,0.5f}},
+			{Vector3{-3,-3,-2},	colors::White,	Vector2{0,1}},
+			{Vector3{0,-3,-2},	colors::White,	Vector2{0.5f,1}},
+			{Vector3{3,-3,-2},	colors::White,	Vector2{1, 1}}
+		};
+		const std::vector<uint32_t> indices{ 3,0,1, 1,4,3, 4,1,2, 2,5,4, 6,3,4, 4,7,6, 7,4,5, 5,8,7 };
+
+		m_pMesh = new Mesh{ m_pDevice, vertices, indices, "resources/uv_grid_2.png" };
+
+		const Vector3 position{ 0,0,0 };
+		const Vector3 rotation{ 0,0,0 };
+		const Vector3 scale{ 1,1,1 };
+
+		m_pMesh->SetWorldMatrix(Matrix::CreateScale(scale) * Matrix::CreateRotation(rotation) * Matrix::CreateTranslation(position));
+	}
+
+	void Renderer::VehicleMeshInit()
+	{
+		std::vector<Vertex> vertices{};
+		std::vector<uint32_t> indices{};
+
+		if (Utils::ParseOBJ("resources/vehicle.obj", vertices, indices) == false)
+			std::cout << ".obj not found\n";
+		
+		m_pMesh = new Mesh{ m_pDevice, vertices, indices, "resources/vehicle_diffuse.png" };
+
+		const Vector3 position{ 0,0,0 };
+		const Vector3 rotation{ 0,0,0 };
+		const Vector3 scale{ 1,1,1 };
+
+		m_pMesh->SetWorldMatrix(Matrix::CreateScale(scale) * Matrix::CreateRotation(rotation) * Matrix::CreateTranslation(position));
+
 	}
 
 	HRESULT Renderer::InitializeDirectX()

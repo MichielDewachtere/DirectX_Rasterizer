@@ -1,9 +1,9 @@
 #pragma once
+#include "Mesh.h"
 
 struct SDL_Window;
 struct SDL_Surface;
 
-class Mesh;
 class Camera;
 
 namespace dae
@@ -22,6 +22,9 @@ namespace dae
 		void Update(const Timer* pTimer) const;
 		void Render() const;
 
+		void ToggleFilteringMethod();
+		void ToggleRotation() { m_IsRotating = !m_IsRotating; }
+
 	private:
 		SDL_Window* m_pWindow{};
 
@@ -29,11 +32,17 @@ namespace dae
 		int m_Height{};
 
 		bool m_IsInitialized{ false };
+		bool m_IsRotating{ false };
 
 		Camera* m_pCamera;
 
 		Mesh* m_pMesh;
-		void MeshInit();
+
+		void TriangleMeshInit();
+		void QuadMeshInit();
+		void VehicleMeshInit();
+
+		Mesh::FilteringMethod m_FilteringMethod{ Mesh::FilteringMethod::Point };
 
 		//DIRECTX
 		HRESULT InitializeDirectX();
