@@ -55,6 +55,12 @@ Texture::Texture(SDL_Surface* pSurface, ID3D11Device* pDevice) :
 }
 
 
+Texture::~Texture()
+{
+	if (m_pSRV) m_pSRV->Release();
+	if (m_pResource) m_pResource->Release();
+}
+
 Texture* Texture::LoadFromFile(const std::string& path, ID3D11Device* pDevice)
 {
 	//Load SDL_Surface using IMG_LOAD

@@ -9,7 +9,7 @@ namespace dae
 	class Texture final
 	{
 	public:
-		~Texture() = default;
+		~Texture();
 		Texture(const Texture& other) = default;
 		Texture& operator=(const Texture& rhs) = default;
 		Texture(Texture&& other) = default;

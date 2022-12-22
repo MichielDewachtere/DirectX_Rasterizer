@@ -20,7 +20,10 @@ Effect::~Effect()
 	if (m_pDiffuseMapVariable) m_pDiffuseMapVariable->Release();
 	if (m_pMatWorldViewProjVariable) m_pMatWorldViewProjVariable->Release();
 
+	if (m_pAnisotropicTechnique) m_pAnisotropicTechnique->Release();
+	if (m_pLinearTechnique) m_pLinearTechnique->Release();
 	if (m_pPointTechnique) m_pPointTechnique->Release();
+
 	if (m_pEffect) m_pEffect->Release();
 }
 
