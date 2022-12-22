@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Effect.h"
 
+#include "Texture.h"
+
 #include <sstream>
 
 using namespace dae;
@@ -9,30 +11,53 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 {
 	m_pEffect = LoadEffect(pDevice, assetFile);
 
-	m_pTechnique = m_pEffect->GetTechniqueByName("DefaultTechnique");
-	if (!m_pTechnique->IsValid()) std::wcout << L"Technique not valid\n";
-
-	m_pMatWorldViewProjVariable = m_pEffect->GetVariableByName("gWorldViewProj")->AsMatrix();
-	if (m_pMatWorldViewProjVariable->IsValid() == false)
-	{
-		std::wcout << L"m_pMatWorldViewProjVariable not valid!\n";
-	}
+	InitTechniques();
+	InitVariables();
 }
 
 Effect::~Effect()
 {
+	if (m_pDiffuseMapVariable) m_pDiffuseMapVariable->Release();
+	if (m_pMatWorldViewProjVariable) m_pMatWorldViewProjVariable->Release();
+
+	if (m_pPointTechnique) m_pPointTechnique->Release();
 	if (m_pEffect) m_pEffect->Release();
 }
 
-ID3DX11Effect* Effect::GetEffect() const
+void Effect::SetDiffuseMap(const std::string& filePath, ID3D11Device* pDevice) const
 {
-	return m_pEffect;
+	const Texture* diffuseTexture = Texture::LoadFromFile(filePath, pDevice);
+
+	if (m_pDiffuseMapVariable)
+		m_pDiffuseMapVariable->SetResource(diffuseTexture->GetShaderResourceView());
+
+	delete diffuseTexture;
 }
 
-ID3DX11EffectTechnique* Effect::GetTechnique() const
+void Effect::InitVariables()
 {
-	return m_pTechnique;
+	m_pMatWorldViewProjVariable = m_pEffect->GetVariableByName("gWorldViewProj")->AsMatrix();
+	if (m_pMatWorldViewProjVariable->IsValid() == false)
+		std::wcout << L"m_pMatWorldViewProjVariable not valid!\n";
+
+	m_pDiffuseMapVariable = m_pEffect->GetVariableByName("gDiffuseMap")->AsShaderResource();
+	if (!m_pDiffuseMapVariable->IsValid())
+		std::wcout << L"m_pDiffuseMapVariable not valid!\n";
+
 }
+
+void Effect::InitTechniques()
+{
+	m_pPointTechnique = m_pEffect->GetTechniqueByName("PointTechnique");
+	if (!m_pPointTechnique->IsValid()) std::wcout << L"PointTechnique not valid\n";
+
+	m_pLinearTechnique = m_pEffect->GetTechniqueByName("LinearTechnique");
+	if (!m_pPointTechnique->IsValid()) std::wcout << L"LinearTechnique not valid\n";
+
+	m_pAnisotropicTechnique = m_pEffect->GetTechniqueByName("AnisotropicTechnique");
+	if (!m_pPointTechnique->IsValid()) std::wcout << L"AnisotropicTechnique not valid\n";
+}
+
 
 ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring& assetFile)
 {
