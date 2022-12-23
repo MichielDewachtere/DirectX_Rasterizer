@@ -37,7 +37,7 @@ void Camera::Update(const Timer* pTimer)
 
 	const Matrix finalRotation = Matrix::CreateRotationX(m_TotalPitch) * Matrix::CreateRotationY(m_TotalYaw);
 
-	m_Forward = finalRotation.TransformVector(Vector3::UnitZ).Normalized();
+	m_Forward = finalRotation.TransformVector(Vector3::UnitZ);
 
 	//Update Matrices
 	CalculateViewMatrix();
@@ -49,16 +49,21 @@ void Camera::CalculateViewMatrix()
 	m_Right = Vector3::Cross(Vector3::UnitY, m_Forward).Normalized();
 	m_Up = Vector3::Cross(m_Forward, m_Right);
 
-	Matrix OBN = { m_Right,m_Up,m_Forward,m_Origin };
+	m_InvViewMatrix = Matrix
+	{
+		m_Right,
+		m_Up,
+		m_Forward,
+		m_Origin
+	};
 
-	m_ViewMatrix = OBN.Inverse();
-	m_InvViewMatrix = OBN;
+	m_ViewMatrix = Matrix::Inverse(m_InvViewMatrix);
 }
 
 void Camera::CalculateProjectionMatrix()
 {
-	constexpr float farPlane{ 100.f };
 	constexpr float nearPlane{ 0.1f };
+	constexpr float farPlane{ 100.f };
 
 	constexpr float a{ farPlane / (farPlane - nearPlane) };
 	constexpr float b{ -(farPlane * nearPlane) / (farPlane - nearPlane) };

@@ -21,6 +21,7 @@ public:
 	void Update(const Timer* pTimer);
 
 	Matrix GetViewMatrix() const { return m_ViewMatrix; }
+	Matrix GetInvViewMatrix() const { return m_InvViewMatrix; }
 	Matrix GetProjectionMatrix() const { return m_ProjectionMatrix; }
 
 private:
