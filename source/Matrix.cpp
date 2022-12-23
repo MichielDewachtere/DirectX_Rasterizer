@@ -228,7 +228,12 @@ namespace dae {
 
 	Matrix Matrix::CreateScale(float sx, float sy, float sz)
 	{
-		return { {sx, 0, 0}, {0, sy, 0}, {0, 0, sz}, Vector3::Zero };
+		return {
+			{sx, 0, 0},
+			{0, sy, 0},
+			{0, 0, sz},
+			Vector3::Zero
+		};
 	}
 
 	Matrix Matrix::CreateScale(const Vector3& s)
