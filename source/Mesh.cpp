@@ -7,7 +7,7 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex>& vertices, const std
 	, m_Vertices(vertices)
 {
 	// Create Vertex Layout
-	static constexpr uint32_t numElements{ 3 };
+	static constexpr uint32_t numElements{ 5 };
 	D3D11_INPUT_ELEMENT_DESC vertexDesc[numElements]{};
 
 	vertexDesc[0].SemanticName = "POSITION";
@@ -24,6 +24,17 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex>& vertices, const std
 	vertexDesc[2].Format = DXGI_FORMAT_R32G32_FLOAT;
 	vertexDesc[2].AlignedByteOffset = 24;
 	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+	vertexDesc[3].SemanticName = "NORMAL";
+	vertexDesc[3].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[3].AlignedByteOffset = 32;
+	vertexDesc[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+
+	vertexDesc[4].SemanticName = "TANGENT";
+	vertexDesc[4].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[4].AlignedByteOffset = 44;
+	vertexDesc[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
 	// Create Input Layout
 	D3DX11_PASS_DESC passDesc{};
@@ -66,6 +77,9 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex>& vertices, const std
 	if (FAILED(result)) return;
 
 	m_pEffect->SetDiffuseMap(filePath, pDevice);
+	m_pEffect->SetNormalMap("resources/vehicle_normal.png", pDevice);
+	m_pEffect->SetSpecularMap("resources/vehicle_specular.png", pDevice);
+	m_pEffect->SetGlossinessMap("resources/vehicle_gloss.png", pDevice);
 }
 
 Mesh::~Mesh()
@@ -109,7 +123,18 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext, FilteringMethod filtering
 void Mesh::SetWorldViewProjectionMatrix(const Matrix& viewMatrix, const Matrix& projectionMatrix) const
 {
 	const Matrix worldViewProjection = m_WorldMatrix * viewMatrix * projectionMatrix;
-	m_pEffect->SetMatrixVariable(worldViewProjection);
+	m_pEffect->SetWorldViewProjectionMatrixVariable(worldViewProjection);
+}
+
+void Mesh::SetWorldMatrix(const Matrix& newMatrix)
+{
+	m_WorldMatrix = newMatrix;
+	m_pEffect->SetWorldMatrixVariable(m_WorldMatrix);
+}
+
+void Mesh::SetInvViewMatrix(const Matrix& newMatrix) const
+{
+	m_pEffect->SetInvViewMatrixVariable(newMatrix);
 }
 
 void Mesh::DrawUsingPointTechnique(ID3D11DeviceContext* pDeviceContext) const

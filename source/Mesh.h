@@ -37,7 +37,8 @@ public:
 	void Render(ID3D11DeviceContext* pDeviceContext, FilteringMethod filteringMethod) const;
 
 	void SetWorldViewProjectionMatrix(const Matrix& viewMatrix, const Matrix& projectionMatrix) const;
-	void SetWorldMatrix(const Matrix& newMatrix) { m_WorldMatrix = newMatrix; }
+	void SetWorldMatrix(const Matrix& newMatrix);
+	void SetInvViewMatrix(const Matrix& newMatrix) const;
 
 	Matrix GetWorldMatrix() const { return m_WorldMatrix; }
 
