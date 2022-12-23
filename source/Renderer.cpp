@@ -98,6 +98,7 @@ namespace dae {
 		}
 
 		m_pMesh->SetWorldViewProjectionMatrix(m_pCamera->GetViewMatrix(), m_pCamera->GetProjectionMatrix());
+		m_pMesh->SetInvViewMatrix(m_pCamera->GetInvViewMatrix());
 	}
 
 	void Renderer::Render() const
