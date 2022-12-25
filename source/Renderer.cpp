@@ -286,7 +286,7 @@ namespace dae {
 		viewport.TopLeftX = 0;
 		viewport.TopLeftY = 0;
 		viewport.MinDepth = 0;
-		viewport.MaxDepth = 0;
+		viewport.MaxDepth = 1;
 		m_pDeviceContext->RSSetViewports(1, &viewport);
 
 		return S_OK;
