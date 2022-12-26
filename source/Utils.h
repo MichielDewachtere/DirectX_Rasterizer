@@ -1,6 +1,7 @@
 #pragma once
 #include <fstream>
 #include "Math.h"
+#include <vector>
 #include "Mesh.h"
 
 namespace dae
@@ -143,7 +144,7 @@ namespace dae
 				vertices[index2].tangent += tangent;
 			}
 
-			//Fix the tangents per vertex now because we accumulated
+			//Create the Tangents (reject)
 			for (auto& v : vertices)
 			{
 				v.tangent = Vector3::Reject(v.tangent, v.normal).Normalized();

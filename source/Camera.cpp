@@ -35,7 +35,7 @@ void Camera::Update(const Timer* pTimer)
 	// Mouse Input 
 	HandleMouseInput(deltaTime, moveSpeed, rotationSpeed);
 
-	const Matrix finalRotation = Matrix::CreateRotationX(m_TotalPitch) * Matrix::CreateRotationY(m_TotalYaw);
+	const Matrix finalRotation = Matrix::CreateRotation(m_TotalPitch, m_TotalYaw, 0);
 
 	m_Forward = finalRotation.TransformVector(Vector3::UnitZ);
 
