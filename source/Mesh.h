@@ -26,7 +26,7 @@ public:
 		Anisotropic = 2
 	};
 
-	Mesh(ID3D11Device* pDevice, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, const std::string& filePath = {});
+	Mesh(ID3D11Device* pDevice, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, Effect* pEffect);
 	~Mesh();
 
 	Mesh(const Mesh& other) = delete;
@@ -37,9 +37,8 @@ public:
 	void Render(ID3D11DeviceContext* pDeviceContext, FilteringMethod filteringMethod) const;
 
 	void SetWorldViewProjectionMatrix(const Matrix& viewMatrix, const Matrix& projectionMatrix) const;
-	void SetWorldMatrix(const Matrix& newMatrix);
-	void SetInvViewMatrix(const Matrix& newMatrix) const;
 
+	void SetWorldMatrix(const Matrix& newMatrix) { m_WorldMatrix = newMatrix; }
 	Matrix GetWorldMatrix() const { return m_WorldMatrix; }
 
 private:
@@ -49,7 +48,7 @@ private:
 	uint32_t m_AmountIndices;
 	ID3D11Buffer* m_pIndexBuffer{};
 
-	Matrix m_WorldMatrix;
+	Matrix m_WorldMatrix{};
 	std::vector<Vertex> m_Vertices;
 
 	void DrawUsingPointTechnique(ID3D11DeviceContext* pDeviceContext) const;

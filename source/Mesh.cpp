@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "Mesh.h"
-#include "Effect.h"
+#include "MeshEffect.h"
 
-Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, const std::string& filePath)
-	: m_pEffect{ new Effect{ pDevice, L"Resources/PosCol3D.fx" } }
+Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, Effect* pEffect)
+	: m_pEffect{ pEffect }
 	, m_Vertices(vertices)
 {
 	// Create Vertex Layout
@@ -39,7 +39,6 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex>& vertices, const std
 	// Create Input Layout
 	D3DX11_PASS_DESC passDesc{};
 	m_pEffect->GetPointTechnique()->GetPassByIndex(0)->GetDesc(&passDesc);
-
 	HRESULT result{ pDevice->CreateInputLayout
 		(
 			vertexDesc,
@@ -57,7 +56,6 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex>& vertices, const std
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 	bd.MiscFlags = 0;
-
 	D3D11_SUBRESOURCE_DATA initData{};
 	initData.pSysMem = vertices.data();
 
@@ -75,11 +73,6 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::vector<Vertex>& vertices, const std
 
 	result = pDevice->CreateBuffer(&bd, &initData, &m_pIndexBuffer);
 	if (FAILED(result)) return;
-
-	m_pEffect->SetDiffuseMap(filePath, pDevice);
-	m_pEffect->SetNormalMap("resources/vehicle_normal.png", pDevice);
-	m_pEffect->SetSpecularMap("resources/vehicle_specular.png", pDevice);
-	m_pEffect->SetGlossinessMap("resources/vehicle_gloss.png", pDevice);
 }
 
 Mesh::~Mesh()
@@ -124,17 +117,6 @@ void Mesh::SetWorldViewProjectionMatrix(const Matrix& viewMatrix, const Matrix& 
 {
 	const Matrix worldViewProjection = m_WorldMatrix * viewMatrix * projectionMatrix;
 	m_pEffect->SetWorldViewProjectionMatrixVariable(worldViewProjection);
-}
-
-void Mesh::SetWorldMatrix(const Matrix& newMatrix)
-{
-	m_WorldMatrix = newMatrix;
-	m_pEffect->SetWorldMatrixVariable(m_WorldMatrix);
-}
-
-void Mesh::SetInvViewMatrix(const Matrix& newMatrix) const
-{
-	m_pEffect->SetInvViewMatrixVariable(newMatrix);
 }
 
 void Mesh::DrawUsingPointTechnique(ID3D11DeviceContext* pDeviceContext) const
