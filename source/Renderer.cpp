@@ -4,6 +4,9 @@
 #include "Camera.h"
 #include "Utils.h"
 
+#include "MeshEffect.h"
+#include "TransEffect.h"
+
 //#define USE_TRIANGLE
 //#define USE_QUAD
 #define USE_VEHICLE
@@ -40,6 +43,7 @@ namespace dae {
 		m_pCamera->Initialize(45.f, Vector3{ 0.f,0.f,-10.f }, m_Width / (float)m_Height);
 #elif defined(USE_VEHICLE)
 		VehicleMeshInit();
+		CombustionMeshInit();
 
 		m_pCamera = new Camera();
 		m_pCamera->Initialize(45.f, Vector3{ 0.f,0.f,-50.f }, m_Width / (float)m_Height);
@@ -49,6 +53,8 @@ namespace dae {
 	Renderer::~Renderer()
 	{
 		delete m_pMesh;
+		delete m_pTransparentMesh;
+
 		delete m_pCamera;
 
 		//Release resources (to prevent resource leaks)
@@ -94,11 +100,16 @@ namespace dae {
 		if (m_IsRotating)
 		{
 			constexpr float rotationSpeed{ 30 * TO_RADIANS };
-			m_pMesh->SetWorldMatrix(Matrix::CreateRotationY(rotationSpeed * pTimer->GetElapsed()) * m_pMesh->GetWorldMatrix());
-		}
+			const Matrix newWorldMatrix = Matrix::CreateRotationY(rotationSpeed * pTimer->GetElapsed()) * m_pMesh->GetWorldMatrix();
+			m_pShadedEffect->SetWorldMatrixVariable(newWorldMatrix);
+			m_pMesh->SetWorldMatrix(newWorldMatrix);
 
+			m_pTransparentMesh->SetWorldMatrix(newWorldMatrix);
+		}
 		m_pMesh->SetWorldViewProjectionMatrix(m_pCamera->GetViewMatrix(), m_pCamera->GetProjectionMatrix());
-		m_pMesh->SetInvViewMatrix(m_pCamera->GetInvViewMatrix());
+		m_pShadedEffect->SetInvViewMatrixVariable(m_pCamera->GetInvViewMatrix());
+
+		m_pTransparentMesh->SetWorldViewProjectionMatrix(m_pCamera->GetViewMatrix(), m_pCamera->GetProjectionMatrix());
 	}
 
 	void Renderer::Render() const
@@ -113,6 +124,7 @@ namespace dae {
 
 		//Render
 		m_pMesh->Render(m_pDeviceContext, m_FilteringMethod);
+		m_pTransparentMesh->Render(m_pDeviceContext, m_FilteringMethod);
 
 		//Present
 		m_pSwapChain->Present(0, 0);
@@ -139,15 +151,13 @@ namespace dae {
 		};
 		const std::vector<uint32_t> indices{ 0,1,2 };
 
-		m_pMesh = new Mesh{ m_pDevice, vertices, indices };
+//		m_pMesh = new Mesh{ m_pDevice, vertices, indices };
 
 		const Vector3 position{ 0,0,0 };
-		const Vector3 rotation{ 0,0,0 };
 		const Vector3 scale{ 1,1,1 };
 		
-		m_pMesh->SetWorldMatrix(Matrix::CreateScale(scale) * Matrix::CreateRotation(rotation) * Matrix::CreateTranslation(position));
+//		m_pMesh->SetWorldMatrix(Matrix::CreateScale(scale) * Matrix::CreateRotation(rotation) * Matrix::CreateTranslation(position));
 	}
-
 	void Renderer::QuadMeshInit()
 	{
 		const std::vector<Vertex> vertices{
@@ -163,15 +173,14 @@ namespace dae {
 		};
 		const std::vector<uint32_t> indices{ 3,0,1, 1,4,3, 4,1,2, 2,5,4, 6,3,4, 4,7,6, 7,4,5, 5,8,7 };
 
-		m_pMesh = new Mesh{ m_pDevice, vertices, indices, "resources/uv_grid_2.png" };
+//		m_pMesh = new Mesh{ m_pDevice, vertices, indices, "resources/uv_grid_2.png" };
 
 		const Vector3 position{ 0,0,0 };
 		const Vector3 rotation{ 0,0,0 };
 		const Vector3 scale{ 1,1,1 };
 
-		m_pMesh->SetWorldMatrix(Matrix::CreateScale(scale) * Matrix::CreateRotation(rotation) * Matrix::CreateTranslation(position));
+//		m_pMesh->SetWorldMatrix(Matrix::CreateScale(scale) * Matrix::CreateRotation(rotation) * Matrix::CreateTranslation(position));
 	}
-
 	void Renderer::VehicleMeshInit()
 	{
 		std::vector<Vertex> vertices{};
@@ -179,15 +188,43 @@ namespace dae {
 
 		if (Utils::ParseOBJ("resources/vehicle.obj", vertices, indices) == false)
 			std::cout << ".obj not found\n";
-		
-		m_pMesh = new Mesh{ m_pDevice, vertices, indices, "resources/vehicle_diffuse.png" };
+
+		m_pShadedEffect = new MeshEffect{ m_pDevice, L"resources/PosCol3D.fx" };
+		m_pShadedEffect->SetDiffuseMap("resources/vehicle_diffuse.png", m_pDevice);
+		m_pShadedEffect->SetNormalMap("resources/vehicle_normal.png", m_pDevice);
+		m_pShadedEffect->SetSpecularMap("resources/vehicle_specular.png", m_pDevice);
+		m_pShadedEffect->SetGlossinessMap("resources/vehicle_gloss.png", m_pDevice);
 
 		const Vector3 position{ 0,0,0 };
 		const Vector3 rotation{ 0,0,0 };
 		const Vector3 scale{ 1,1,1 };
+		const Matrix worldMatrix = Matrix::CreateScale(scale) * Matrix::CreateRotation(rotation) * Matrix::CreateTranslation(position);
 
-		m_pMesh->SetWorldMatrix(Matrix::CreateScale(scale) * Matrix::CreateRotation(rotation) * Matrix::CreateTranslation(position));
+		m_pShadedEffect->SetWorldMatrixVariable(worldMatrix);
 
+		m_pMesh = new Mesh{ m_pDevice, vertices, indices, m_pShadedEffect };
+		m_pMesh->SetWorldMatrix(worldMatrix);
+	}
+	void Renderer::CombustionMeshInit()
+	{
+		std::vector<Vertex> vertices{};
+		std::vector<uint32_t> indices{};
+
+		if (Utils::ParseOBJ("resources/fireFX.obj", vertices, indices) == false)
+			std::cout << ".obj not found\n";
+
+		m_pTransEffect = new TransEffect{ m_pDevice, L"resources/Transparent3D.fx" };
+		m_pTransEffect->SetDiffuseMap("resources/fireFX_diffuse.png", m_pDevice);
+
+		const Vector3 position{ 0,0,0 };
+		const Vector3 rotation{ 0,0,0 };
+		const Vector3 scale{ 1,1,1 };
+		const Matrix worldMatrix = Matrix::CreateScale(scale) * Matrix::CreateRotation(rotation) * Matrix::CreateTranslation(position);
+
+//		m_pTransEffect->SetWorldViewProjectionMatrixVariable()
+
+		m_pTransparentMesh = new Mesh{ m_pDevice, vertices, indices, m_pTransEffect };
+		m_pTransparentMesh->SetWorldMatrix(worldMatrix);
 	}
 
 	HRESULT Renderer::InitializeDirectX()
@@ -206,11 +243,10 @@ namespace dae {
 			return result;
 
 		//Create DXGI Factory to create SwapChain based on hardware
-		result = CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&m_pDXGIFactory));  // NOLINT(clang-diagnostic-language-extension-token)
-		if (FAILED(result))
-			return result;
+		result = CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&m_pDXGIFactory));
+		if (FAILED(result)) return result;
 
-		//Create SwapChain Descriptor
+		// Create the swapchain description
 		DXGI_SWAP_CHAIN_DESC swapChainDesc{};
 		swapChainDesc.BufferDesc.Width = m_Width;
 		swapChainDesc.BufferDesc.Height = m_Height;
@@ -235,7 +271,7 @@ namespace dae {
 
 		//Create SwapChain and hook it into the handle of the SDL window
 		result = m_pDXGIFactory->CreateSwapChain(m_pDevice, &swapChainDesc, &m_pSwapChain);
-		if (FAILED(result))
+		if (FAILED(result)) 
 			return result;
 
 		//Create the Depth/Stencil Buffer and View
@@ -260,20 +296,20 @@ namespace dae {
 
 		//Create the Stencil Buffer
 		result = m_pDevice->CreateTexture2D(&depthStencilDesc, nullptr, &m_pDepthStencilBuffer);
-		if (FAILED(result))
+		if (FAILED(result)) 
 			return result;
 
 		//Create the Stencil View
 		result = m_pDevice->CreateDepthStencilView(m_pDepthStencilBuffer, &depthStencilViewDesc, &m_pDepthStencilView);
-		if (FAILED(result))
+		if (FAILED(result)) 
 			return result;
 
 		//Create the RenderTargetView
-		result = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&m_pRenderTargetBuffer));  // NOLINT(clang-diagnostic-language-extension-token)
-		if (FAILED(result))
+		result = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&m_pRenderTargetBuffer));
+		if (FAILED(result)) 
 			return result;
 		result = m_pDevice->CreateRenderTargetView(m_pRenderTargetBuffer, nullptr, &m_pRenderTargetView);
-		if (FAILED(result))
+		if (FAILED(result)) 
 			return result;
 
 		//Bind the Views to the Output Merger Stage

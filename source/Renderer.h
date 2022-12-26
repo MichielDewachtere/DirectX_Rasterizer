@@ -5,6 +5,8 @@ struct SDL_Window;
 struct SDL_Surface;
 
 class Camera;
+class MeshEffect;
+class TransEffect;
 
 namespace dae
 {
@@ -37,10 +39,15 @@ namespace dae
 		Camera* m_pCamera;
 
 		Mesh* m_pMesh;
+		Mesh* m_pTransparentMesh;
+
+		MeshEffect* m_pShadedEffect;
+		TransEffect* m_pTransEffect;
 
 		void TriangleMeshInit();
 		void QuadMeshInit();
 		void VehicleMeshInit();
+		void CombustionMeshInit();
 
 		Mesh::FilteringMethod m_FilteringMethod{ Mesh::FilteringMethod::Point };
 
