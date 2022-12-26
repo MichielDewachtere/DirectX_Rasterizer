@@ -180,7 +180,7 @@ float4 PSPoint(VS_OUTPUT input) : SV_TARGET
 }
 float4 PSLinear(VS_OUTPUT input) : SV_TARGET
 {
-		float3 viewDirection = normalize(input.WorldPosition.xyz - gInvViewMatrix[3].xyz);
+	float3 viewDirection = normalize(input.WorldPosition.xyz - gInvViewMatrix[3].xyz);
 
 	//Normal Map
 	float3 normal;
@@ -215,7 +215,7 @@ float4 PSLinear(VS_OUTPUT input) : SV_TARGET
 }
 float4 PSAnisotropic(VS_OUTPUT input) : SV_TARGET
 {
-		float3 viewDirection = normalize(input.WorldPosition.xyz - gInvViewMatrix[3].xyz);
+	float3 viewDirection = normalize(input.WorldPosition.xyz - gInvViewMatrix[3].xyz);
 
 	//Normal Map
 	float3 normal;
